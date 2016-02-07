@@ -1,5 +1,3 @@
-#![feature(custom_derive, plugin)]
-
 extern crate ws;
 extern crate env_logger;
 extern crate serde_json;
@@ -9,10 +7,9 @@ use serde_json::Value;
 use std::env;
 
 fn main() {
-	// Setup logging.  Set the RUST_LOG env variable to see output.
+	// Set up logging.  Set the RUST_LOG env variable to see output.
 	env_logger::init().unwrap();
 
-	// Connect to the url and call the closure
 	if let Err(error) = connect("ws://127.0.0.1:29001", |out| {
 		// Queue a message to be sent when the WebSocket is open
 		if let Err(_) = out.send(r#"{"type": "hello", "mode": "dashboard"}"#) {
@@ -21,10 +18,7 @@ fn main() {
 
 		// The handler needs to take ownership of out, so we use move
 		move |msg: ws::Message| {
-			//print_type_of(&msg);
 			let text = msg.as_text().unwrap();
-			//println!("{}", text);
-
 			let ev: Value = serde_json::from_str(text).unwrap();
 			if let Some(message) = ev.find("message") {
 				let trimmed = message.as_string().unwrap().trim_right();
@@ -41,7 +35,6 @@ fn main() {
 		}
 
 	}) {
-		// Inform the user of failure
 		println!("Failed to create WebSocket due to: {:?}", error);
 	}
 }
