@@ -26,14 +26,14 @@ fn main() {
 			//println!("{}", text);
 
 			let ev: Value = serde_json::from_str(text).unwrap();
-			if let Some(message) = ev.lookup("message") {
+			if let Some(message) = ev.find("message") {
 				let trimmed = message.as_string().unwrap().trim_right();
 				if !trimmed.is_empty() {
 					println!("{}", trimmed);
 				}
 			} else {
-				let response_code = ev.lookup("response_code").unwrap().as_u64().unwrap();
-				let url = ev.lookup("url").unwrap().as_string().unwrap();
+				let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
+				let url = ev.find("url").unwrap().as_string().unwrap();
 				println!(" {} {}", response_code, url);
 			}
 
