@@ -20,15 +20,19 @@ fn main() {
 		move |msg: ws::Message| {
 			let text = msg.as_text().unwrap();
 			let ev: Value = serde_json::from_str(text).unwrap();
+			//println!("{:?}", ev);
+			let ident = ev.lookup("job_data.ident").unwrap().as_string().unwrap();
 			if let Some(message) = ev.find("message") {
 				let trimmed = message.as_string().unwrap().trim_right();
 				if !trimmed.is_empty() {
-					println!("{}", trimmed);
+					for line in trimmed.lines() {
+						println!("{} {}", ident, line);
+					}
 				}
 			} else {
 				let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
 				let url = ev.find("url").unwrap().as_string().unwrap();
-				println!(" {} {}", response_code, url);
+				println!("{}  {} {}", ident, response_code, url);
 			}
 
 			out.close(CloseCode::Normal)
