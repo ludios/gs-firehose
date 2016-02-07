@@ -1,0 +1,6 @@
+[package]
+name = "gs-firehose"
+version = "0.1.0"
+authors = ["Ivan Kozik <ivan@ludios.org>"]
+
+[dependencies]
