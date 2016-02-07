@@ -1,9 +1,7 @@
 #![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
 
 extern crate ws;
 extern crate env_logger;
-extern crate serde;
 extern crate serde_json;
 
 use ws::{connect, CloseCode};
