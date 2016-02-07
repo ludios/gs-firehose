@@ -8,6 +8,7 @@ extern crate serde_json;
 
 use ws::{connect, CloseCode};
 use serde_json::Value;
+use std::env;
 
 fn main() {
 	// Setup logging.  Set the RUST_LOG env variable to see output.
@@ -28,7 +29,10 @@ fn main() {
 
 			let ev: Value = serde_json::from_str(text).unwrap();
 			if let Some(message) = ev.lookup("message") {
-				println!("{}", message.as_string().unwrap().trim_right());
+				let trimmed = message.as_string().unwrap().trim_right();
+				if !trimmed.is_empty() {
+					println!("{}", trimmed);
+				}
 			} else {
 				let response_code = ev.lookup("response_code").unwrap().as_u64().unwrap();
 				let url = ev.lookup("url").unwrap().as_string().unwrap();
