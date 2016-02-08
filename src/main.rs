@@ -10,6 +10,45 @@ use clap::{Arg, App};
 use ansi_term::Colour::{Fixed, Black};
 use ansi_term::Style;
 
+fn on_message(msg: ws::Message) {
+	let gray = Fixed(244);
+	let black_on_gray = Black.on(Fixed(254));
+	let black_on_purple = Black.on(Fixed(225));
+	let black_on_yellow = Black.on(Fixed(221));
+	let black_on_red = Black.on(Fixed(210));
+	let no_style = Style::new();
+
+	let text = msg.as_text().unwrap();
+	let ev: Value = serde_json::from_str(text).unwrap();
+	//println!("{:?}", ev);
+	let ident = ev.lookup("job_data.ident").unwrap().as_string().unwrap();
+	if let Some(message) = ev.find("message") {
+		let trimmed = message.as_string().unwrap().trim_right();
+		if !trimmed.is_empty() {
+			for line in trimmed.lines() {
+				if line.starts_with("ERROR ") {
+					println!("{} {}", gray.paint(ident), black_on_gray.paint(line));
+				} else {
+					println!("{}  {}", gray.paint(ident), black_on_gray.paint(line));
+				}
+			}
+		}
+	} else {
+		let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
+		let url = ev.find("url").unwrap().as_string().unwrap();
+		let color = match response_code {
+			c if c >= 400 && c < 500 => black_on_yellow,
+			c if c == 0 || c >= 500 => black_on_red,
+			c if c >= 300 && c < 400 => black_on_purple,
+			_ => no_style
+		};
+		println!("{}  {}",
+			gray.paint(ident),
+			color.paint(
+				format!(" {:>3} {}", response_code, url)));
+	}
+}
+
 fn main() {
     let matches =
 	App::new("gs-firehose")
@@ -25,13 +64,6 @@ fn main() {
 	// Set up logging.  Set the RUST_LOG env variable to see output.
 	env_logger::init().unwrap();
 
-	let gray = Fixed(244);
-	let black_on_gray = Black.on(Fixed(254));
-	let black_on_purple = Black.on(Fixed(225));
-	let black_on_yellow = Black.on(Fixed(221));
-	let black_on_red = Black.on(Fixed(210));
-	let no_style = Style::new();
-
 	if let Err(error) = connect(url, |out| {
 		// Queue a message to be sent when the WebSocket is open
 		if let Err(_) = out.send(r#"{"type": "hello", "mode": "dashboard"}"#) {
@@ -40,36 +72,7 @@ fn main() {
 
 		// The handler needs to take ownership of out, so we use move
 		move |msg: ws::Message| {
-			let text = msg.as_text().unwrap();
-			let ev: Value = serde_json::from_str(text).unwrap();
-			//println!("{:?}", ev);
-			let ident = ev.lookup("job_data.ident").unwrap().as_string().unwrap();
-			if let Some(message) = ev.find("message") {
-				let trimmed = message.as_string().unwrap().trim_right();
-				if !trimmed.is_empty() {
-					for line in trimmed.lines() {
-						if line.starts_with("ERROR ") {
-							println!("{} {}", gray.paint(ident), black_on_gray.paint(line));
-						} else {
-							println!("{}  {}", gray.paint(ident), black_on_gray.paint(line));
-						}
-					}
-				}
-			} else {
-				let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
-				let url = ev.find("url").unwrap().as_string().unwrap();
-				let color = match response_code {
-					c if c >= 400 && c < 500 => black_on_yellow,
-					c if c == 0 || c >= 500 => black_on_red,
-					c if c >= 300 && c < 400 => black_on_purple,
-					_ => no_style
-				};
-				println!("{}  {}",
-					gray.paint(ident),
-					color.paint(
-						format!(" {:>3} {}", response_code, url)));
-			}
-
+			on_message(msg);
 			out.close(CloseCode::Normal)
 		}
 
