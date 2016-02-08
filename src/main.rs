@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate lazy_static;
 extern crate ws;
 extern crate env_logger;
 extern crate serde_json;
@@ -19,8 +21,8 @@ struct DashboardColors {
 	none: Style
 }
 
-fn print_like_dashboard(msg: ws::Message) {
-	let colors = DashboardColors {
+lazy_static! {
+	static ref COLORS: DashboardColors = DashboardColors {
 		ident: Fixed(244), // gray
 		stdout: Black.on(Fixed(254)), // gray
 		redirect: Black.on(Fixed(225)), // purple
@@ -28,7 +30,10 @@ fn print_like_dashboard(msg: ws::Message) {
 		error: Black.on(Fixed(210)), // red
 		none: Style::new()
 	};
+}
 
+fn print_like_dashboard(msg: ws::Message) {
+	let colors = &*COLORS;
 	let text = msg.as_text().unwrap();
 	let ev: Value = serde_json::from_str(text).unwrap();
 	//println!("{:?}", ev);
