@@ -90,7 +90,7 @@ fn main() {
 			match mode {
 				"dashboard" => print_like_dashboard(msg),
 				"json" => println!("{}", msg),
-				_ => panic!("Invalid mode")
+				_ => panic!("Invalid mode {}", mode)
 			};
 			out.close(CloseCode::Normal)
 		}
