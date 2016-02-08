@@ -7,7 +7,7 @@ extern crate ansi_term;
 use ws::{connect, CloseCode};
 use serde_json::Value;
 use clap::{Arg, App};
-use ansi_term::Colour::Fixed;
+use ansi_term::Colour::{Fixed, Black};
 
 fn main() {
     let matches =
@@ -25,6 +25,10 @@ fn main() {
 	env_logger::init().unwrap();
 
 	let gray = Fixed(244);
+	let black_on_gray = Black.on(Fixed(254));
+	let black_on_purple = Black.on(Fixed(225));
+	let black_on_yellow = Black.on(Fixed(221));
+	let black_on_red = Black.on(Fixed(210));
 
 	if let Err(error) = connect(url, |out| {
 		// Queue a message to be sent when the WebSocket is open
@@ -43,16 +47,22 @@ fn main() {
 				if !trimmed.is_empty() {
 					for line in trimmed.lines() {
 						if line.starts_with("ERROR ") {
-							println!("{} {}", gray.paint(ident), line);
+							println!("{} {}", gray.paint(ident), black_on_gray.paint(line));
 						} else {
-							println!("{}  {}", gray.paint(ident), line);
+							println!("{}  {}", gray.paint(ident), black_on_gray.paint(line));
 						}
 					}
 				}
 			} else {
 				let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
 				let url = ev.find("url").unwrap().as_string().unwrap();
-				println!("{}   {:>3} {}", gray.paint(ident), response_code, url);
+				let colored_url = match response_code {
+					c if c >= 400 && c < 500 => black_on_yellow.paint(url),
+					c if c == 0 || c >= 500 => black_on_red.paint(url),
+					c if c >= 300 && c < 400 => black_on_purple.paint(url),
+					_ => Black.paint(url)
+				};
+				println!("{}   {:>3} {}", gray.paint(ident), response_code, colored_url);
 			}
 
 			out.close(CloseCode::Normal)
