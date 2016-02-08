@@ -8,6 +8,7 @@ use ws::{connect, CloseCode};
 use serde_json::Value;
 use clap::{Arg, App};
 use ansi_term::Colour::{Fixed, Black};
+use ansi_term::Style;
 
 fn main() {
     let matches =
@@ -29,6 +30,7 @@ fn main() {
 	let black_on_purple = Black.on(Fixed(225));
 	let black_on_yellow = Black.on(Fixed(221));
 	let black_on_red = Black.on(Fixed(210));
+	let no_style = Style::new();
 
 	if let Err(error) = connect(url, |out| {
 		// Queue a message to be sent when the WebSocket is open
@@ -56,13 +58,16 @@ fn main() {
 			} else {
 				let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
 				let url = ev.find("url").unwrap().as_string().unwrap();
-				let colored_url = match response_code {
-					c if c >= 400 && c < 500 => black_on_yellow.paint(url),
-					c if c == 0 || c >= 500 => black_on_red.paint(url),
-					c if c >= 300 && c < 400 => black_on_purple.paint(url),
-					_ => Black.paint(url)
+				let color = match response_code {
+					c if c >= 400 && c < 500 => black_on_yellow,
+					c if c == 0 || c >= 500 => black_on_red,
+					c if c >= 300 && c < 400 => black_on_purple,
+					_ => no_style
 				};
-				println!("{}   {:>3} {}", gray.paint(ident), response_code, colored_url);
+				println!("{}  {}",
+					gray.paint(ident),
+					color.paint(
+						format!(" {:>3} {}", response_code, url)));
 			}
 
 			out.close(CloseCode::Normal)
