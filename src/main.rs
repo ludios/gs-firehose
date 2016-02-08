@@ -10,7 +10,7 @@ use clap::{Arg, App};
 use ansi_term::Colour::{Fixed, Black};
 use ansi_term::Style;
 
-fn on_message(msg: ws::Message) {
+fn print_like_dashboard(msg: ws::Message) {
 	let gray = Fixed(244);
 	let black_on_gray = Black.on(Fixed(254));
 	let black_on_purple = Black.on(Fixed(225));
@@ -50,16 +50,23 @@ fn on_message(msg: ws::Message) {
 }
 
 fn main() {
-    let matches =
-	App::new("gs-firehose")
-		.version("0.1")
-		.about("Connects to a grab-site or ArchiveBot server and dumps all messages in either a human-readable or JSON format.")
-		.arg(Arg::with_name("WS_URL")
-			.help("The WebSocket URL to connect to.  Default: ws://127.0.0.1:29001")
-			.index(1))
-		.get_matches();
+	let modes = ["dashboard", "json"];
+	let matches =
+		App::new("gs-firehose")
+			.version("0.1")
+			.about("Connects to a grab-site or ArchiveBot server and dumps all messages in either a human-readable or JSON format.")
+			.arg(Arg::with_name("mode")
+				.long("mode")
+				.help("Output mode.  Default: 'dashboard'.  Use 'json' to dump raw traffic.")
+				.takes_value(true)
+				.possible_values(&modes))
+			.arg(Arg::with_name("WS_URL")
+				.help("The WebSocket URL to connect to.  Default: ws://127.0.0.1:29001")
+				.index(1))
+			.get_matches();
 
 	let url = matches.value_of("WS_URL").unwrap_or("ws://127.0.0.1:29001");
+	let mode = matches.value_of("mode").unwrap_or("dashboard");
 
 	// Set up logging.  Set the RUST_LOG env variable to see output.
 	env_logger::init().unwrap();
@@ -72,10 +79,13 @@ fn main() {
 
 		// The handler needs to take ownership of out, so we use move
 		move |msg: ws::Message| {
-			on_message(msg);
+			match mode {
+				"dashboard" => print_like_dashboard(msg),
+				"json" => println!("{}", msg),
+				_ => panic!("Invalid mode")
+			};
 			out.close(CloseCode::Normal)
 		}
-
 	}) {
 		println!("Failed to create WebSocket due to: {:?}", error);
 	}
