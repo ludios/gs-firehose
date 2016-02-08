@@ -1,16 +1,32 @@
 extern crate ws;
 extern crate env_logger;
 extern crate serde_json;
+extern crate clap;
+extern crate ansi_term;
 
 use ws::{connect, CloseCode};
 use serde_json::Value;
-use std::env;
+use clap::{Arg, App};
+use ansi_term::Colour::Fixed;
 
 fn main() {
+    let matches =
+	App::new("gs-firehose")
+		.version("0.1")
+		.about("Connects to a grab-site or ArchiveBot server and dumps all messages in either a human-readable or JSON format.")
+		.arg(Arg::with_name("WS_URL")
+			.help("The WebSocket URL to connect to.  Default: ws://127.0.0.1:29001")
+			.index(1))
+		.get_matches();
+
+	let url = matches.value_of("WS_URL").unwrap_or("ws://127.0.0.1:29001");
+
 	// Set up logging.  Set the RUST_LOG env variable to see output.
 	env_logger::init().unwrap();
 
-	if let Err(error) = connect("ws://127.0.0.1:29001", |out| {
+	let gray = Fixed(244);
+
+	if let Err(error) = connect(url, |out| {
 		// Queue a message to be sent when the WebSocket is open
 		if let Err(_) = out.send(r#"{"type": "hello", "mode": "dashboard"}"#) {
 			println!("Websocket couldn't queue an initial message.")
@@ -26,13 +42,17 @@ fn main() {
 				let trimmed = message.as_string().unwrap().trim_right();
 				if !trimmed.is_empty() {
 					for line in trimmed.lines() {
-						println!("{} {}", ident, line);
+						if line.starts_with("ERROR ") {
+							println!("{} {}", gray.paint(ident), line);
+						} else {
+							println!("{}  {}", gray.paint(ident), line);
+						}
 					}
 				}
 			} else {
 				let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
 				let url = ev.find("url").unwrap().as_string().unwrap();
-				println!("{}  {} {}", ident, response_code, url);
+				println!("{}   {:>3} {}", gray.paint(ident), response_code, url);
 			}
 
 			out.close(CloseCode::Normal)
