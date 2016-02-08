@@ -9,6 +9,9 @@ Usage
 2.	`cd gs-firehose/`
 3.	`cargo build --release`
 4.	`./target/release/gs-firehose --help`
+
 	or just
+
 	`./target/release/gs-firehose`
+	
 	to connect to the default grab-site WebSocket URL `ws://127.0.0.1:29001`
