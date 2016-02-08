@@ -7,16 +7,27 @@ extern crate ansi_term;
 use ws::{connect, CloseCode};
 use serde_json::Value;
 use clap::{Arg, App};
+use ansi_term::{Style, Colour};
 use ansi_term::Colour::{Fixed, Black};
-use ansi_term::Style;
+
+struct DashboardColors {
+	ident: Colour,
+	stdout: Style,
+	redirect: Style,
+	warning: Style,
+	error: Style,
+	none: Style
+}
 
 fn print_like_dashboard(msg: ws::Message) {
-	let gray = Fixed(244);
-	let black_on_gray = Black.on(Fixed(254));
-	let black_on_purple = Black.on(Fixed(225));
-	let black_on_yellow = Black.on(Fixed(221));
-	let black_on_red = Black.on(Fixed(210));
-	let no_style = Style::new();
+	let colors = DashboardColors {
+		ident: Fixed(244), // gray
+		stdout: Black.on(Fixed(254)), // gray
+		redirect: Black.on(Fixed(225)), // purple
+		warning: Black.on(Fixed(221)), // yellow
+		error: Black.on(Fixed(210)), // red
+		none: Style::new()
+	};
 
 	let text = msg.as_text().unwrap();
 	let ev: Value = serde_json::from_str(text).unwrap();
@@ -26,24 +37,21 @@ fn print_like_dashboard(msg: ws::Message) {
 		let trimmed = message.as_string().unwrap().trim_right();
 		if !trimmed.is_empty() {
 			for line in trimmed.lines() {
-				if line.starts_with("ERROR ") {
-					println!("{} {}", gray.paint(ident), black_on_gray.paint(line));
-				} else {
-					println!("{}  {}", gray.paint(ident), black_on_gray.paint(line));
-				}
+				let padding = if line.starts_with("ERROR ") { "" } else { " " };
+				println!("{} {}{}", colors.ident.paint(ident), padding, colors.stdout.paint(line));
 			}
 		}
 	} else {
 		let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
 		let url = ev.find("url").unwrap().as_string().unwrap();
 		let color = match response_code {
-			c if c >= 400 && c < 500 => black_on_yellow,
-			c if c == 0 || c >= 500 => black_on_red,
-			c if c >= 300 && c < 400 => black_on_purple,
-			_ => no_style
+			c if c >= 400 && c < 500 => colors.warning,
+			c if c == 0 || c >= 500 => colors.error,
+			c if c >= 300 && c < 400 => colors.redirect,
+			_ => colors.none
 		};
 		println!("{}  {}",
-			gray.paint(ident),
+			colors.ident.paint(ident),
 			color.paint(
 				format!(" {:>3} {}", response_code, url)));
 	}
