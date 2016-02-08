@@ -35,7 +35,7 @@ fn main() {
 	if let Err(error) = connect(url, |out| {
 		// Queue a message to be sent when the WebSocket is open
 		if let Err(_) = out.send(r#"{"type": "hello", "mode": "dashboard"}"#) {
-			println!("Websocket couldn't queue an initial message.")
+			panic!("Websocket couldn't queue an initial message.")
 		}
 
 		// The handler needs to take ownership of out, so we use move
