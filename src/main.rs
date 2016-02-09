@@ -47,9 +47,10 @@ fn print_like_dashboard(msg: ws::Message) {
 			}
 		}
 	} else {
-		let response_code = ev.find("response_code").unwrap().as_u64().unwrap();
+		let status_code = ev.find("response_code").unwrap().as_u64().unwrap();
+		let status_text = ev.find("wget_code").unwrap().as_string().unwrap();
 		let url = ev.find("url").unwrap().as_string().unwrap();
-		let color = match response_code {
+		let color = match status_code {
 			c if c >= 400 && c < 500 => colors.warning,
 			c if c == 0 || c >= 500 => colors.error,
 			c if c >= 300 && c < 400 => colors.redirect,
@@ -58,7 +59,7 @@ fn print_like_dashboard(msg: ws::Message) {
 		println!("{}  {}",
 			colors.ident.paint(ident),
 			color.paint(
-				format!(" {:>3} {}", response_code, url)));
+				format!(" {:>3} {} {}", status_code, status_text, url)));
 	}
 }
 
