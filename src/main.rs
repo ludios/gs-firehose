@@ -46,7 +46,8 @@ struct JobData {
 struct Event {
 	message: Option<String>,
 	job_data: JobData,
-	wget_code: Option<String>, /* todo rename to status_text */
+	#[serde(rename(deserialize="wget_code"))]
+	status_text: Option<String>,
 	response_code: Option<u64>,
 	url: Option<String>,
 }
@@ -66,7 +67,7 @@ fn print_like_dashboard(msg: ws::Message) {
 		}
 	} else {
 		let status_code = ev.response_code.unwrap();
-		let status_text = ev.wget_code.unwrap();
+		let status_text = ev.status_text.unwrap();
 		let url = ev.url.unwrap();
 		let color = match status_code {
 			c if c >= 400 && c < 500 => colors.warning,
