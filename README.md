@@ -15,7 +15,7 @@ Usage
 
 	`./target/release/gs-firehose`
 
-	to connect to the default grab-site WebSocket URL `ws://127.0.0.1:29001`
+	to connect to the default grab-site WebSocket URL `ws://127.0.0.1:29000`
 
 Terminal colors
 ---

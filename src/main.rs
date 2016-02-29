@@ -1,13 +1,18 @@
+#![feature(custom_derive, plugin)]
+#![plugin(serde_macros)]
+
 #[macro_use]
 extern crate lazy_static;
 extern crate ws;
 extern crate env_logger;
+extern crate serde;
 extern crate serde_json;
 extern crate clap;
 extern crate ansi_term;
+#[macro_use]
+extern crate dump;
 
 use ws::{connect, CloseCode};
-use serde_json::Value;
 use clap::{Arg, App};
 use ansi_term::{Style, Colour};
 use ansi_term::Colour::{Fixed, Black};
@@ -32,24 +37,37 @@ lazy_static! {
 	};
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct JobData {
+	ident: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Event {
+	message: Option<String>,
+	job_data: JobData,
+	wget_code: Option<String>, /* todo rename to status_text */
+	response_code: Option<u64>,
+	url: Option<String>,
+}
+
 fn print_like_dashboard(msg: ws::Message) {
 	let colors = &*COLORS;
 	let text = msg.as_text().unwrap();
-	let ev: Value = serde_json::from_str(text).unwrap();
-	//println!("{:?}", ev);
-	let ident = ev.lookup("job_data.ident").unwrap().as_string().unwrap();
-	if let Some(message) = ev.find("message") {
-		let trimmed = message.as_string().unwrap().trim_right();
+	let ev: Event = serde_json::from_str(&text).unwrap();
+	let ident = ev.job_data.ident;
+	if let Some(message) = ev.message {
+		let trimmed = message.trim_right();
 		if !trimmed.is_empty() {
 			for line in trimmed.lines() {
 				let padding = if line.starts_with("ERROR ") { "" } else { " " };
-				println!("{} {}{}", colors.ident.paint(ident), padding, colors.stdout.paint(line));
+				println!("{} {}{}", colors.ident.paint(&ident[..]), padding, colors.stdout.paint(line));
 			}
 		}
 	} else {
-		let status_code = ev.find("response_code").unwrap().as_u64().unwrap();
-		let status_text = ev.find("wget_code").unwrap().as_string().unwrap();
-		let url = ev.find("url").unwrap().as_string().unwrap();
+		let status_code = ev.response_code.unwrap();
+		let status_text = ev.wget_code.unwrap();
+		let url = ev.url.unwrap();
 		let color = match status_code {
 			c if c >= 400 && c < 500 => colors.warning,
 			c if c == 0 || c >= 500 => colors.error,
@@ -57,7 +75,7 @@ fn print_like_dashboard(msg: ws::Message) {
 			_ => colors.none
 		};
 		println!("{}  {}",
-			colors.ident.paint(ident),
+			colors.ident.paint(&ident[..]),
 			color.paint(
 				format!(" {:>3} {} {}", status_code, status_text, url)));
 	}
@@ -75,11 +93,11 @@ fn main() {
 				.takes_value(true)
 				.possible_values(&modes))
 			.arg(Arg::with_name("WS_URL")
-				.help("The WebSocket URL to connect to.  Default: ws://127.0.0.1:29001")
+				.help("The WebSocket URL to connect to.  Default: ws://127.0.0.1:29000")
 				.index(1))
 			.get_matches();
 
-	let url = matches.value_of("WS_URL").unwrap_or("ws://127.0.0.1:29001");
+	let url = matches.value_of("WS_URL").unwrap_or("ws://127.0.0.1:29000");
 	let mode = matches.value_of("mode").unwrap_or("dashboard");
 
 	// Set up logging.  Set the RUST_LOG env variable to see output.
