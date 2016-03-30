@@ -5,7 +5,7 @@ This is the terminal version of the grab-site dashboard.  It doesn't put crawl j
 
 Usage
 ---
-1.	[Install Rust](https://www.rust-lang.org/), which includes rustc and cargo.
+1.	[Install Rust Nightly](https://www.rust-lang.org/downloads.html), which includes rustc and cargo.
 2.	`git clone https://github.com/ludios/gs-firehose`
 3.	`cd gs-firehose/`
 4.	`cargo build --release`
