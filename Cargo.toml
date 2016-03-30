@@ -1,6 +1,6 @@
 [package]
 name = "gs-firehose"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ivan Kozik <ivan@ludios.org>"]
 
 [dependencies]
@@ -12,4 +12,3 @@ serde_json = "*"
 clap = "*"
 ansi_term = "*"
 lazy_static = "*"
-dump = "*"

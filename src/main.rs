@@ -1,16 +1,13 @@
 #![feature(custom_derive, plugin)]
 #![plugin(serde_macros)]
 
-#[macro_use]
-extern crate lazy_static;
+#[macro_use] extern crate lazy_static;
 extern crate ws;
 extern crate env_logger;
 extern crate serde;
 extern crate serde_json;
 extern crate clap;
 extern crate ansi_term;
-#[macro_use]
-extern crate dump;
 
 use ws::{connect, CloseCode};
 use clap::{Arg, App};
