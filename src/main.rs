@@ -9,7 +9,7 @@ extern crate serde_json;
 extern crate clap;
 extern crate ansi_term;
 
-use ws::{connect, CloseCode};
+use ws::connect;
 use clap::{Arg, App};
 use ansi_term::{Style, Colour};
 use ansi_term::Colour::{Fixed, Black};
@@ -114,7 +114,7 @@ fn main() {
 				"json" => println!("{}", msg),
 				_ => panic!("Invalid mode {}", mode)
 			};
-			out.close(CloseCode::Normal)
+			Ok(())
 		}
 	}) {
 		println!("Failed to create WebSocket due to: {:?}", error);
