@@ -7,6 +7,5 @@ language: rust
 rust:
   - nightly
 script:
-  - rm -rf ~/.cargo
   - cargo build --verbose
   - cargo build --release --verbose
